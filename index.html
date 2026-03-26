@@ -57,7 +57,37 @@
         .back-btn { align-self: flex-start; margin-bottom: 10px; cursor: pointer; color: var(--boy-blue); font-weight: bold; }
 
         /* 找字母网格 */
-        .search-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
+        .search-grid { 
+            display: grid; 
+            /* 1. 明确告诉浏览器每一列就是50像素，一共5列 */
+            grid-template-columns: repeat(5, 50px); 
+            gap: 20px; 
+            margin-top: 20px; 
+
+            /* 2. 居中核心：让网格在容器内水平居中 */
+            justify-content: center; 
+            
+            /* 3. 这里的宽度要大于 335px 才能装下 5 个圆圈 */
+            width: 100%;
+            max-width: 400px; 
+            
+            /* 4. 盒子本身在页面居中 */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .search-grid .letter-btn { 
+            width: 50px;  /* 固定的宽度 */
+            height: 50px; /* 固定的高度 */
+            font-size: 2.2rem; 
+            border-radius: 50%; 
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            /* 移除多余的外边距干扰 */
+            margin: 0; 
+        }
     </style>
 </head>
 <body>
