@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小了了的字母冒险 - 修正版</title>
+    <title>小了了的字母冒险 - v1.0 </title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
     <!-- 引入撒花特效插件 -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -109,8 +109,13 @@
             'C': { word: 'Car', icon: '🚗' }, 'D': { word: 'Dino', icon: '🦖' },
             'E': { word: 'Elephant', icon: '🐘' }, 'F': { word: 'Fish', icon: '🐟' },
             'G': { word: 'Goat', icon: '🐐' }, 'H': { word: 'Hat', icon: '🎩' }
+            'I': { word: 'Ice', icon: '🧊' }, 'J': { word: 'Jump', icon: '💃' }
+            'K': { word: 'Key', icon: '🔑' }, 'L': { word: 'Link', icon: '🔗' }
+            'M': { word: 'Monkey', icon: '🐒' }, 'N': { word: 'Note', icon: '📒' } 
+            'O': { word: 'Orange', icon: '🍊' }, 'P': { word: 'Pineapple', icon: '🍍' }
+
         };
-        "IJKLMNOPQRSTUVWXYZ".split('').forEach(l => { if(!alphabetData[l]) alphabetData[l] = { word: 'Magic', icon: '✨' }; });
+        "QRSTUVWXYZ".split('').forEach(l => { if(!alphabetData[l]) alphabetData[l] = { word: 'Magic', icon: '✨' }; });
 
         let currentLetter = 'A';
         const ROWS = 5;
