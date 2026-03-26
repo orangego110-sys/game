@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小了了的字母冒险 - v1.0 </title>
+    <title>小了了的字母乐园 - v1.0 </title>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
     <!-- 引入撒花特效插件 -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -64,7 +64,7 @@
 
     <!-- 1. 首页列表 -->
     <div id="home-page" class="page active">
-        <h1 style="color: #0288D1; text-align: center;">小了了的字母乐园冒险记</h1>
+        <h1 style="color: #0288D1; text-align: center;">小了了的字母乐园</h1>
         <div class="alphabet-grid" id="main-grid"></div>
     </div>
 
@@ -98,10 +98,9 @@
             <canvas id="connect-canvas"></canvas>
             <div class="connect-grid" id="connect-grid"></div>
         </div>
-        <p style="color:#666; font-size:0.9rem; margin-top:10px;">找不到可以消的对子时，系统会自动洗牌哦！✨</p>
+        <p style="color:#666; font-size:0.9rem; margin-top:10px;">找不到可以消的字母时，系统会自动洗牌哦！✨</p>
     </div>
 
-    <!-- 这里就是您问的 <script> 标签的开始 -->
     <script>
         // --- 1. 基础数据 ---
         const alphabetData = {
