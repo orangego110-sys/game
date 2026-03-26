@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>小男孩的字母冒险 - 修正版</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&display=swap" rel="stylesheet">
+    <!-- 引入撒花特效插件 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --bg: #E0F7FA;
+            --card-white: #FFFFFF;
+            --boy-blue: #2196F3;
+            --error-red: #FF5252;
+            --success-green: #4CAF50;
+        }
+
+        body {
+            font-family: 'Fredoka One', cursive;
+            background-color: var(--bg);
+            margin: 0;
+            overflow-x: hidden;
+            color: #333;
+            user-select: none; /* 防止长按选中文本 */
+        }
+
+        /* 页面基础样式 */
+        .page { display: none; flex-direction: column; align-items: center; padding: 20px; animation: fadeIn 0.4s; min-height: 100vh; }
+        .page.active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 首页网格 */
+        .alphabet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr)); gap: 12px; width: 100%; max-width: 600px; }
+        .letter-btn { aspect-ratio: 1; background: white; border-radius: 18px; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border: 4px solid transparent; transition: 0.2s; }
+        .letter-btn:active { transform: scale(0.95); }
+
+        /* 详情卡片 */
+        .detail-card { background: white; padding: 30px; border-radius: 40px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 85%; max-width: 400px; margin-top: 20px; }
+        .big-letter { font-size: 6rem; margin: 0; color: var(--boy-blue); line-height: 1; }
+        .btn { padding: 12px 20px; border: none; border-radius: 50px; background: var(--boy-blue); color: white; font-family: inherit; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 0 #1976D2; margin: 8px; }
+
+        /* 连连看游戏区域 */
+        .game-container { position: relative; background: #3F51B5; border: 8px solid #283593; border-radius: 20px; padding: 10px; margin-top: 10px; }
+        .connect-grid { display: grid; grid-template-columns: repeat(6, 55px); grid-template-rows: repeat(5, 55px); gap: 5px; }
+        
+        .connect-item { 
+            width: 55px; height: 55px; background: #5C6BC0; border-radius: 10px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 1.6rem; color: white; cursor: pointer;
+            box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2); transition: 0.2s;
+        }
+        .connect-item.selected { background: #FFEB3B; color: #333; transform: scale(0.9); box-shadow: 0 0 15px #FFEB3B; }
+        .connect-item.hidden { opacity: 0; cursor: default; pointer-events: none; }
+
+        #connect-canvas { position: absolute; top: 0; left: 0; pointer-events: none; z-index: 10; }
+        .back-btn { align-self: flex-start; margin-bottom: 10px; cursor: pointer; color: var(--boy-blue); font-weight: bold; }
+
+        /* 找字母网格 */
+        .search-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <!-- 1. 首页列表 -->
+    <div id="home-page" class="page active">
+        <h1 style="color: #0288D1; text-align: center;">小了了的字母乐园冒险记</h1>
+        <div class="alphabet-grid" id="main-grid"></div>
+    </div>
+
+    <!-- 2. 字母详情页 -->
+    <div id="detail-page" class="page">
+        <div class="back-btn" onclick="showPage('home-page')">⬅ 返回列表</div>
+        <div class="detail-card">
+            <p class="big-letter" id="display-char">A</p>
+            <div id="display-icon" style="font-size: 4rem;">🍎</div>
+            <p style="font-size: 1.5rem;" id="display-phrase">A is for Apple</p>
+            <div style="display:flex; flex-wrap: wrap; justify-content: center; margin-top: 10px;">
+                <button class="btn" onclick="startSearchGame()">🔍 找字母填色</button>
+                <button class="btn" style="background: #9C27B0; box-shadow: 0 4px 0 #7B1FA2;" onclick="startConnectGame()">🧩 字母连连看</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 游戏一：找字母填色 -->
+    <div id="game-search-page" class="page">
+        <div class="back-btn" onclick="showPage('detail-page')">⬅ 返回</div>
+        <h2>找出所有的 <span id="target-char-hint" style="color:red">A</span></h2>
+        <div class="search-grid" id="search-game-grid"></div>
+        <p id="search-status" style="margin-top:20px; font-weight:bold;">进度: 0 / 6</p>
+    </div>
+
+    <!-- 4. 游戏二：连连看页面 -->
+    <div id="game-connect-page" class="page">
+        <div class="back-btn" onclick="showPage('detail-page')">⬅ 退出游戏</div>
+        <h2 style="margin: 5px;">连连看大挑战</h2>
+        <div class="game-container">
+            <canvas id="connect-canvas"></canvas>
+            <div class="connect-grid" id="connect-grid"></div>
+        </div>
+        <p style="color:#666; font-size:0.9rem; margin-top:10px;">找不到可以消的对子时，系统会自动洗牌哦！✨</p>
+    </div>
+
+    <!-- 这里就是您问的 <script> 标签的开始 -->
+    <script>
+        // --- 1. 基础数据 ---
+        const alphabetData = {
+            'A': { word: 'Apple', icon: '🍎' }, 'B': { word: 'Bear', icon: '🐻' },
+            'C': { word: 'Car', icon: '🚗' }, 'D': { word: 'Dino', icon: '🦖' },
+            'E': { word: 'Elephant', icon: '🐘' }, 'F': { word: 'Fish', icon: '🐟' },
+            'G': { word: 'Goat', icon: '🐐' }, 'H': { word: 'Hat', icon: '🎩' }
+        };
+        "IJKLMNOPQRSTUVWXYZ".split('').forEach(l => { if(!alphabetData[l]) alphabetData[l] = { word: 'Magic', icon: '✨' }; });
+
+        let currentLetter = 'A';
+        const ROWS = 5;
+        const COLS = 6;
+        let board = [];
+        let firstSelect = null;
+        let isAnimating = false;
+
+        // --- 2. 初始化首页 ---
+        const mainGrid = document.getElementById('main-grid');
+        Object.keys(alphabetData).sort().forEach(l => {
+            const btn = document.createElement('div');
+            btn.className = 'letter-btn';
+            btn.innerHTML = `<span style="font-size:1.8rem">${l}</span><span>${alphabetData[l].icon}</span>`;
+            btn.onclick = () => openDetail(l);
+            mainGrid.appendChild(btn);
+        });
+
+        function showPage(id) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function openDetail(l) {
+            currentLetter = l;
+            document.getElementById('display-char').innerText = l;
+            document.getElementById('display-icon').innerText = alphabetData[l].icon;
+            document.getElementById('display-phrase').innerText = `${l} is for ${alphabetData[l].word}`;
+            showPage('detail-page');
+        }
+
+        // --- 3. 游戏一：找字母填色 ---
+        function startSearchGame() {
+            const grid = document.getElementById('search-game-grid');
+            grid.innerHTML = '';
+            document.getElementById('target-char-hint').innerText = currentLetter;
+            let found = 0;
+            const items = [];
+            for(let i=0; i<25; i++) items.push(i < 6 ? currentLetter : "BCDEFGHIJKLMNOPQRSTUVWXYZ".split('')[Math.floor(Math.random()*20)]);
+            items.sort(() => Math.random() - 0.5).forEach(char => {
+                const el = document.createElement('div');
+                el.className = 'letter-btn'; el.innerText = char;
+                el.onclick = function() {
+                    if(char === currentLetter && !this.style.background) {
+                        this.style.background = "#FFEB3B"; 
+                        this.style.borderColor = "#FBC02D";
+                        found++;
+                        document.getElementById('search-status').innerText = `进度: ${found} / 6`;
+                        if(found === 6) { confetti(); setTimeout(() => showPage('detail-page'), 1500); }
+                    } else if(char !== currentLetter) {
+                        this.style.background = "#FFCDD2";
+                        setTimeout(() => this.style.background = "white", 300);
+                    }
+                };
+                grid.appendChild(el);
+            });
+            document.getElementById('search-status').innerText = `进度: 0 / 6`;
+            showPage('game-search-page');
+        }
+
+        // --- 4. 游戏二：连连看核心逻辑 ---
+        function startConnectGame() {
+            const grid = document.getElementById('connect-grid');
+            grid.innerHTML = '';
+            board = [];
+            firstSelect = null;
+            isAnimating = false;
+
+            // 生成配对字母
+            let chars = [];
+            for(let i=0; i<(ROWS*COLS)/2; i++) {
+                let c = (i < 3) ? currentLetter : String.fromCharCode(65 + Math.floor(Math.random()*26));
+                chars.push(c, c);
+            }
+            chars.sort(() => Math.random() - 0.5);
+
+            // 初始化带缓冲区的棋盘（四周多出一圈空位用于绕线）
+            for(let r=0; r<ROWS+2; r++) {
+                board[r] = [];
+                for(let c=0; c<COLS+2; c++) {
+                    if(r===0 || r===ROWS+1 || c===0 || c===COLS+1) board[r][c] = null;
+                    else board[r][c] = chars.pop();
+                }
+            }
+            
+            renderConnectBoard();
+            initCanvas();
+            showPage('game-connect-page');
+
+            // 启动检查死锁
+            if(!hasAvailableMoves()) autoShuffle();
+        }
+
+        function renderConnectBoard() {
+            const grid = document.getElementById('connect-grid');
+            grid.innerHTML = '';
+            for(let r=1; r<=ROWS; r++) {
+                for(let c=1; c<=COLS; c++) {
+                    const el = document.createElement('div');
+                    el.className = 'connect-item';
+                    if(!board[r][c]) {
+                        el.classList.add('hidden');
+                    } else {
+                        el.innerText = board[r][c];
+                        el.id = `cell-${r}-${c}`;
+                        el.onclick = () => handleConnectClick(r, c);
+                    }
+                    grid.appendChild(el);
+                }
+            }
+        }
+
+        function handleConnectClick(r, c) {
+            if(isAnimating || !board[r][c]) return;
+            const clickedEl = document.getElementById(`cell-${r}-${c}`);
+
+            if(!firstSelect) {
+                firstSelect = {r, c};
+                clickedEl.classList.add('selected');
+            } else {
+                const prevEl = document.getElementById(`cell-${firstSelect.r}-${firstSelect.c}`);
+                if(firstSelect.r === r && firstSelect.c === c) {
+                    firstSelect = null;
+                    clickedEl.classList.remove('selected');
+                    return;
+                }
+
+                const path = findPath(firstSelect.r, firstSelect.c, r, c);
+                if(board[r][c] === board[firstSelect.r][firstSelect.c] && path) {
+                    isAnimating = true;
+                    drawLink(path);
+                    board[r][c] = null;
+                    board[firstSelect.r][firstSelect.c] = null;
+                    setTimeout(() => {
+                        renderConnectBoard();
+                        clearCanvas();
+                        isAnimating = false;
+                        if(!checkWin() && !hasAvailableMoves()) autoShuffle();
+                    }, 400);
+                } else {
+                    clickedEl.style.background = "#FFCDD2";
+                    setTimeout(() => clickedEl.style.background = "#5C6BC0", 300);
+                    prevEl.classList.remove('selected');
+                }
+                firstSelect = null;
+            }
+        }
+
+        // 连连看路径搜索算法
+        function findPath(r1, c1, r2, c2) {
+            const queue = [{r: r1, c: c1, dir: -1, turns: 0, path: [{r: r1, c: c1}]}];
+            const visited = new Map();
+            while(queue.length > 0) {
+                const curr = queue.shift();
+                if(curr.turns > 2) continue;
+                if(curr.r === r2 && curr.c === c2) return curr.path;
+                const dirs = [[0,1], [0,-1], [1,0], [-1,0]];
+                for(let i=0; i<4; i++) {
+                    const nr = curr.r + dirs[i][0], nc = curr.c + dirs[i][1];
+                    if(nr >=0 && nr < ROWS+2 && nc >=0 && nc < COLS+2) {
+                        if(board[nr][nc] === null || (nr === r2 && nc === c2)) {
+                            const nextTurns = (curr.dir !== -1 && curr.dir !== i) ? curr.turns + 1 : curr.turns;
+                            if(nextTurns <= 2) {
+                                const key = `${nr},${nc},${i}`;
+                                if(!visited.has(key) || visited.get(key) > nextTurns) {
+                                    visited.set(key, nextTurns);
+                                    queue.push({r: nr, c: nc, dir: i, turns: nextTurns, path: [...curr.path, {r: nr, c: nc}]});
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        function hasAvailableMoves() {
+            const list = [];
+            for(let r=1; r<=ROWS; r++) for(let c=1; c<=COLS; c++) if(board[r][c]) list.push({r,c, v: board[r][c]});
+            for(let i=0; i<list.length; i++) {
+                for(let j=i+1; j<list.length; j++) {
+                    if(list[i].v === list[j].v && findPath(list[i].r, list[i].c, list[j].r, list[j].c)) return true;
+                }
+            }
+            return false;
+        }
+
+        function autoShuffle() {
+            const chars = board.flat().filter(x => x !== null);
+            if(chars.length === 0) return;
+            alert("哎呀，没路走了，魔法洗牌！✨");
+            chars.sort(() => Math.random() - 0.5);
+            let idx = 0;
+            for(let r=1; r<=ROWS; r++) for(let c=1; c<=COLS; c++) if(board[r][c]) board[r][c] = chars[idx++];
+            renderConnectBoard();
+            if(!hasAvailableMoves()) autoShuffle();
+        }
+
+        function initCanvas() {
+            const cvs = document.getElementById('connect-canvas');
+            const box = document.querySelector('.game-container');
+            cvs.width = box.offsetWidth; cvs.height = box.offsetHeight;
+        }
+
+        function drawLink(path) {
+            const ctx = document.getElementById('connect-canvas').getContext('2d');
+            ctx.strokeStyle = '#FFF'; ctx.lineWidth = 5; ctx.lineCap = 'round'; ctx.shadowBlur = 10; ctx.shadowColor = '#00FFFF';
+            ctx.beginPath();
+            path.forEach((p, i) => {
+                const x = (p.c - 1) * 60 + 27 + 10; const y = (p.r - 1) * 60 + 27 + 10;
+                if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        }
+
+        function clearCanvas() {
+            const cvs = document.getElementById('connect-canvas');
+            cvs.getContext('2d').clearRect(0,0,cvs.width,cvs.height);
+        }
+
+        function checkWin() {
+            if(board.flat().every(x => x === null)) {
+                confetti();
+                setTimeout(() => { alert("🌟 太棒了！全部消掉啦！"); showPage('detail-page'); }, 800);
+                return true;
+            }
+            return false;
+        }
+    </script>
+    <!-- 这里是 <script> 标签的结束 -->
+
+</body>
+</html>
